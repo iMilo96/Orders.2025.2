@@ -9,13 +9,15 @@ namespace Orders.Backend.Repositories.Implementations;
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
     private readonly DataContext _context;
+    private readonly DbSet<T> _entity;
 
     public GenericRepository(DataContext context)
     {
         _context = context;
+        _entity = _context.Set<T>();
     }
 
-    public async Task<ActionResponse<T>> AddAsync(T entity)
+    public virtual async Task<ActionResponse<T>> AddAsync(T entity)
     {
         _context.Add(entity);
         try
@@ -37,24 +39,78 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         }
     }
 
-    public Task<ActionResponse<T>> DeleteAsync(int id)
+    public virtual async Task<ActionResponse<T>> DeleteAsync(int id)
     {
-        throw new NotImplementedException();
+        var row = await _entity.FindAsync(id);
+        if (row == null)
+        {
+            return new ActionResponse<T>
+            {
+                Message = "Registro no encontrado."
+            };
+        }
+        _entity.Remove(row);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            return new ActionResponse<T>
+            {
+                WasSuccess = true
+            };
+        }
+        catch
+        {
+            return new ActionResponse<T>
+            {
+                Message = "No se puede eliminar porque tiene registros relacionados."
+            };
+        }
     }
 
-    public Task<ActionResponse<T>> GetAsync(int id)
+    public virtual async Task<ActionResponse<T>> GetAsync(int id)
     {
-        throw new NotImplementedException();
+        var row = await _entity.FindAsync(id);
+        if (row == null)
+        {
+            return new ActionResponse<T>
+            {
+                Message = "Registro no encontrado."
+            };
+        }
+        return new ActionResponse<T>
+        {
+            WasSuccess = true,
+            Result = row
+        };
     }
 
-    public Task<ActionResponse<IEnumerable<T>>> GetAsync()
+    public virtual async Task<ActionResponse<IEnumerable<T>>> GetAsync() => new ActionResponse<IEnumerable<T>>
     {
-        throw new NotImplementedException();
-    }
+        WasSuccess = true,
+        Result = await _entity.ToListAsync()
+    };
 
-    public Task<ActionResponse<T>> UpdateAsync(T entity)
+    public virtual async Task<ActionResponse<T>> UpdateAsync(T entity)
     {
-        throw new NotImplementedException();
+        _context.Update(entity);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return new ActionResponse<T>
+            {
+                WasSuccess = true,
+                Result = entity
+            };
+        }
+        catch (DbUpdateException)
+        {
+            return DbUpdateExceptionActionResponse();
+        }
+        catch (Exception exception)
+        {
+            return ExceptionActionResponse(exception);
+        }
     }
 
     private ActionResponse<T> ExceptionActionResponse(Exception exception) => new ActionResponse<T>
