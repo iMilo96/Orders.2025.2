@@ -57,4 +57,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.Urls.Add("http://localhost:5158");
+app.Urls.Add("https://localhost:7111");
+
 app.Run();
