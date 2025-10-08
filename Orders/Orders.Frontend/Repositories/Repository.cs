@@ -19,14 +19,15 @@ namespace Orders.Frontend.Repositories
 
         public async Task<HttpResponseWrapper<T>> GetAsync<T>(string url)
         {
-            var responseHttp = await _httpClient.GetAsync(url);
-            if (responseHttp.IsSuccessStatusCode)
+            var responseString = await _httpClient.GetAsync(url);
+            Console.WriteLine(responseString);
+            if (responseString.IsSuccessStatusCode)
             {
-                var response = await UnserializeAnswerAsync<T>(responseHttp);
-                return new HttpResponseWrapper<T>(response, false, responseHttp);
+                var response = await UnserializeAnswerAsync<T>(responseString);
+                return new HttpResponseWrapper<T>(response, false, responseString);
             }
 
-            return new HttpResponseWrapper<T>(default, true, responseHttp);
+            return new HttpResponseWrapper<T>(default, true, responseString);
         }
 
         public async Task<HttpResponseWrapper<object>> PostAsync<T>(string url, T model)

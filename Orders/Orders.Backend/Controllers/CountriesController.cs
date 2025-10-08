@@ -36,7 +36,7 @@ public class CountriesController : GenericController<Country>
         var action = await _countriesUnitOfWork.GetAsync();
         if (action.WasSuccess)
         {
-            return Ok(action);
+            return Ok(action.Result);
         }
         else
         {
